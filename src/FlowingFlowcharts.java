@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 // TODO remove * once I have identified which specifics I need
 import javax.swing.*;
 import java.awt.*;
@@ -7,23 +8,74 @@ import javax.swing.event.*;
 import java.lang.reflect.*;
 
 public class FlowingFlowcharts extends JFrame {
+
 	private JMenuItem fileNew, fileClose; //, fileOpen, fileSave, fileSaveAs, fileExport;
 	private final ArrayList<JMenuItem> menusToDisable = new ArrayList<JMenuItem>();
-	private final Boolean flowchartIsOpen = false;
-	private final JPanel displayPanel;
+	private final FlowchartDrawingArea displayPanel;
+	
+	private Boolean flowchartIsOpen = false;
+	private FlowElement rootElement = null;
+	private FlowElement currentlySelectedElement = null;
 
 	public FlowingFlowcharts() {
 		super("Flowing Flowcharts");
 		setSize(500,500);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		rootElement = null;
 
-		displayPanel = new JPanel();
+		displayPanel = new FlowchartDrawingArea();
 		displayPanel.setBackground(Color.WHITE);
 		setContentPane(displayPanel);
 		
+		setupKeyBindings();
 		setupMenuBar();
 		setupMainmenu();
 		setVisible(true);
+	}
+
+	private void setupKeyBindings() {
+		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventPostProcessor(new KeyEventPostProcessor() {
+			private boolean shiftToggle = false;
+
+	        public boolean postProcessKeyEvent(KeyEvent e) {
+	            int keyPressed = e.getKeyCode();
+
+	            if (e.getID() == KeyEvent.KEY_PRESSED && flowchartIsOpen) {
+
+	            	// If the key pressed is a typical latin character or punctuation
+	            	if ((keyPressed >= 44 && keyPressed <= 111) || keyPressed == 192 || keyPressed == 222 || keyPressed == 32) {
+	            		currentlySelectedElement.text.append(e.getKeyChar());
+	            	}
+
+	            	// If the key pressed is backspace
+	            	else if (keyPressed == 8) {
+	            		currentlySelectedElement.text.deleteCharAt(currentlySelectedElement.text.length() - 1);
+	            	}
+
+	            	// Im not sure what do with enter yet (10)
+
+	            	// delete (127)
+
+	            	// shift (16)
+
+	            	// ctrl (17)
+
+	            	// alt 18
+
+	            	// escape (27)
+
+	            	// arrow keys (LURD - 37 38 39 40)
+	            	else if (keyPressed == 37) currentlySelectedElement = currentlySelectedElement.addChild(Directions.LEFT, rootElement);
+	            	else if (keyPressed == 38) currentlySelectedElement = currentlySelectedElement.addChild(Directions.UP, rootElement);
+	            	else if (keyPressed == 39) currentlySelectedElement = currentlySelectedElement.addChild(Directions.RIGHT, rootElement);
+	            	else if (keyPressed == 40) currentlySelectedElement = currentlySelectedElement.addChild(Directions.DOWN, rootElement);
+	            }
+
+	            displayPanel.repaint();
+	            // System.out.println(e.getKeyCode());
+	            return true;
+	        }
+	    });
 	}
 
 	private void setupMenuBar() {
@@ -120,6 +172,11 @@ public class FlowingFlowcharts extends JFrame {
 
 		displayPanel.removeAll();
 		displayPanel.revalidate();
+		rootElement = new FlowElement();
+		rootElement.setSelected(true);		
+		currentlySelectedElement = rootElement;
+		flowchartIsOpen = true;
+		displayPanel.setRootElement(rootElement);
 		displayPanel.repaint();
 	}
 
