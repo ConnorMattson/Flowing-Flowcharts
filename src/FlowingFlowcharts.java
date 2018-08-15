@@ -9,6 +9,7 @@ import java.lang.reflect.*;
 
 public class FlowingFlowcharts extends JFrame {
 
+
 	private JMenuItem fileNew, fileClose; //, fileOpen, fileSave, fileSaveAs, fileExport;
 	private final ArrayList<JMenuItem> menusToDisable = new ArrayList<JMenuItem>();
 	private final FlowchartDrawingArea displayPanel;
@@ -17,14 +18,21 @@ public class FlowingFlowcharts extends JFrame {
 	private FlowElement rootElement = null;
 	private FlowElement currentlySelectedElement = null;
 
+	private Dimension frameSize;
+
 	public FlowingFlowcharts() {
 		super("Flowing Flowcharts");
-		setSize(500,500);
+		setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setMinimumSize(new Dimension(810, 410));
+		addComponentListener(new ResizeListener());
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		rootElement = null;
 
 		displayPanel = new FlowchartDrawingArea();
 		displayPanel.setBackground(Color.WHITE);
+
+		frameSize = displayPanel.getBounds().getSize();
+		System.out.println(frameSize);
 		setContentPane(displayPanel);
 		
 		setupKeyBindings();
@@ -55,6 +63,9 @@ public class FlowingFlowcharts extends JFrame {
 	            	// Im not sure what do with enter yet (10)
 
 	            	// delete (127)
+	            	else if (keyPressed == 127) {
+	            		currentlySelectedElement = currentlySelectedElement.delete(rootElement);
+	            	}
 
 	            	// shift (16)
 
@@ -65,10 +76,54 @@ public class FlowingFlowcharts extends JFrame {
 	            	// escape (27)
 
 	            	// arrow keys (LURD - 37 38 39 40)
-	            	else if (keyPressed == 37) currentlySelectedElement = currentlySelectedElement.addChild(Directions.LEFT, rootElement);
-	            	else if (keyPressed == 38) currentlySelectedElement = currentlySelectedElement.addChild(Directions.UP, rootElement);
-	            	else if (keyPressed == 39) currentlySelectedElement = currentlySelectedElement.addChild(Directions.RIGHT, rootElement);
-	            	else if (keyPressed == 40) currentlySelectedElement = currentlySelectedElement.addChild(Directions.DOWN, rootElement);
+	            	if (e.isShiftDown()) {
+	            		if (keyPressed == 37) {
+	            			FlowElement newlySelected = currentlySelectedElement.firstElementInDirection(Directions.LEFT);
+	            			if (newlySelected != null) {
+	            				currentlySelectedElement.setSelected(false);
+	            				newlySelected.setSelected(true);
+	            				currentlySelectedElement = newlySelected;
+	            				rootElement.moveBranch(250,0);
+	            			}
+	            		}
+
+		            	else if (keyPressed == 38) {
+	            			FlowElement newlySelected = currentlySelectedElement.firstElementInDirection(Directions.UP);
+	            			if (newlySelected != null) {
+	            				currentlySelectedElement.setSelected(false);
+	            				newlySelected.setSelected(true);
+	            				currentlySelectedElement = newlySelected;
+	            				rootElement.moveBranch(0,100);
+	            			}
+	            		}
+
+		            	else if (keyPressed == 39) {
+	            			FlowElement newlySelected = currentlySelectedElement.firstElementInDirection(Directions.RIGHT);
+	            			if (newlySelected != null) {
+	            				currentlySelectedElement.setSelected(false);
+	            				newlySelected.setSelected(true);
+	            				currentlySelectedElement = newlySelected;
+	            				rootElement.moveBranch(-250,0);
+	            			}
+	            		}
+
+		            	else if (keyPressed == 40) {
+	            			FlowElement newlySelected = currentlySelectedElement.firstElementInDirection(Directions.DOWN);
+	            			if (newlySelected != null) {
+	            				currentlySelectedElement.setSelected(false);
+	            				newlySelected.setSelected(true);
+	            				currentlySelectedElement = newlySelected;
+	            				rootElement.moveBranch(0,-100);
+	            			}
+	            		}
+	            	}
+
+	            	else {
+		            	if (keyPressed == 37) currentlySelectedElement = currentlySelectedElement.addChild(Directions.LEFT, rootElement);
+		            	else if (keyPressed == 38) currentlySelectedElement = currentlySelectedElement.addChild(Directions.UP, rootElement);
+		            	else if (keyPressed == 39) currentlySelectedElement = currentlySelectedElement.addChild(Directions.RIGHT, rootElement);
+		            	else if (keyPressed == 40) currentlySelectedElement = currentlySelectedElement.addChild(Directions.DOWN, rootElement);
+	            	}
 	            }
 
 	            displayPanel.repaint();
@@ -172,7 +227,8 @@ public class FlowingFlowcharts extends JFrame {
 
 		displayPanel.removeAll();
 		displayPanel.revalidate();
-		rootElement = new FlowElement();
+		System.out.println(frameSize.height/2 - 50);
+		rootElement = new FlowElement(frameSize.width/2 - 100, frameSize.height/2 - 25);
 		rootElement.setSelected(true);		
 		currentlySelectedElement = rootElement;
 		flowchartIsOpen = true;
@@ -214,4 +270,18 @@ public class FlowingFlowcharts extends JFrame {
 		openFlowchartButton.setEnabled(false);
 		displayPanel.add(openFlowchartButton);
 	}
+
+	private class ResizeListener implements ComponentListener {
+
+        public void componentHidden(ComponentEvent e) {}
+        public void componentMoved(ComponentEvent e) {}
+        public void componentShown(ComponentEvent e) {}
+
+        public void componentResized(ComponentEvent e) {
+			Dimension newFrameSize = displayPanel.getBounds().getSize();
+
+			if (rootElement != null) rootElement.moveBranch((newFrameSize.width - frameSize.width)/2 , (newFrameSize.height - frameSize.height)/2);
+			frameSize = newFrameSize;
+        }   
+    }
 }
