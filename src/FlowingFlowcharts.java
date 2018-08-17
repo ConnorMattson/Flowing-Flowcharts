@@ -52,12 +52,12 @@ public class FlowingFlowcharts extends JFrame {
 
 	            	// If the key pressed is a typical latin character or punctuation
 	            	if ((keyPressed >= 44 && keyPressed <= 111) || keyPressed == 192 || keyPressed == 222 || keyPressed == 32) {
-	            		currentlySelectedElement.text.append(e.getKeyChar());
+	            		currentlySelectedElement.addText(e.getKeyChar());
 	            	}
 
 	            	// If the key pressed is backspace
 	            	else if (keyPressed == 8) {
-	            		currentlySelectedElement.text.deleteCharAt(currentlySelectedElement.text.length() - 1);
+	            		currentlySelectedElement.deleteText();
 	            	}
 
 	            	// Im not sure what do with enter yet (10)

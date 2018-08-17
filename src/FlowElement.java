@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.StringBuilder;
@@ -6,8 +7,8 @@ import java.lang.Math;
 
 public class FlowElement {
 	
-	protected FlowElement parent;
-	protected Directions parentDirection;
+	protected FlowElement parent = null;
+	protected Directions parentDirection = Directions.NONE;
 	protected ArrayList<FlowElement> leftChildren = new ArrayList<FlowElement>();
 	protected ArrayList<FlowElement> upChildren = new ArrayList<FlowElement>();
 	protected ArrayList<FlowElement> rightChildren = new ArrayList<FlowElement>();
@@ -15,14 +16,14 @@ public class FlowElement {
 	private double topLeftX;
 	private double topLeftY;
 	private boolean isSelected = false;
+	private boolean wordsToolong = false;
 
-	public StringBuilder text = new StringBuilder();
+	private ArrayList<String> words = new ArrayList<String>();
 
 	public FlowElement(double x,double y) {
-		parent = null;
-		parentDirection = Directions.NONE;
 		topLeftX = x;
 		topLeftY = y;
+		words.add("");
 	}
 
 	public FlowElement(FlowElement parent, Directions parentDirection, double x, double y) {
@@ -30,6 +31,23 @@ public class FlowElement {
 		this.parentDirection = parentDirection;
 		topLeftX = x;
 		topLeftY = y;
+		words.add("");
+	}
+
+	public void addText(char c) {
+		if (c == ' ' && words.get(words.size() - 1) != "" && wordsToolong == false) words.add("");
+		else if (wordsToolong == false) words.set(words.size() - 1, words.get(words.size() - 1) + c);
+	}
+
+	public void deleteText() {
+		wordsToolong = false;
+
+		int wordIndex = words.size() - 1;
+		String word = words.get(wordIndex);
+		int wordLength = word.length();
+
+		if (wordLength > 0) words.set(wordIndex, word.substring(0, wordLength - 1));
+		else if (words.size() > 1) words.remove(wordIndex);
 	}
 
 	public FlowElement firstElementInDirection(Directions direction) {
@@ -98,21 +116,39 @@ public class FlowElement {
 		g.setColor(Color.BLACK);
 		g.drawRect(floorTopLeftX, floorTopLeftY, 200, 50);
 
-		// TODO wrap text
-		// character width
-		// cWidth = 
-		// int width = g.getFontMetrics().stringWidth(text); use this?
-		// 1. is text longer than line
-		// 2. cut string at end of last word before the next word will cause the line
-		//    to be too long
-		// 3. print all the strings
-		// or
-		// 1. get next word width
-		// 2. (word width + current width < max width) ? print word : new line, goto 1
-		// but this causes problems with knowing how many lines to print and allignment.
-		// instead of printing append to 2d array and count lines then print all?
+		// TODO, fix bug where user types in one long line of text with no spaces
+		ArrayList<String> stringToOutput = new ArrayList<String>();
+		stringToOutput.add("");
+		int lastLineWidth = 0;
+		int spaceWidth = g.getFontMetrics().stringWidth(" ");
 
-		g.drawString(text.toString(), floorTopLeftX+100, floorTopLeftY+25);
+		for (String word: words) {
+			int wordWidth = g.getFontMetrics().stringWidth(word);
+
+			if (lastLineWidth + spaceWidth + wordWidth < 193) {
+				int index = stringToOutput.size() - 1;
+				stringToOutput.set(index, stringToOutput.get(index) + " " + word);
+				lastLineWidth += wordWidth + spaceWidth;
+			}
+			else {
+				stringToOutput.add(word);
+				lastLineWidth = wordWidth;
+			}
+		}
+
+		// delete the last character and stop more text from being typed 
+		if (stringToOutput.size() > 4) {
+			deleteText();
+			wordsToolong = true;
+		}
+
+		// delete the " " that is added to the start of the first line
+		stringToOutput.set(0, stringToOutput.get(0).substring(1,stringToOutput.get(0).length()));
+
+		for (int i = 0; i < stringToOutput.size() && i < 4; i++) {
+			g.drawString(stringToOutput.get(i), floorTopLeftX + 6, floorTopLeftY + 15 + (10*i));
+		}
+		
 
 		if (leftChildren.size() > 0) {
 			int[] xCoords = {floorTopLeftX-40, floorTopLeftX-30, floorTopLeftX-30, floorTopLeftX-10, floorTopLeftX-10, floorTopLeftX-30, floorTopLeftX-30};
